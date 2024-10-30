@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site de Streaming</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;400&family=Roboto+Condensed:wght@700&family=Lobster&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        .header {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: linear-gradient(45deg, #FF0000, #FF0004);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        .header img {
+            animation: logo-animation 2s infinite alternate;
+            width: 120px;
+            margin-bottom: 10px;
+        }
+        @keyframes logo-animation {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+        .header-text {
+            font-family: 'Lobster', cursive;
+            font-size: 24px;
+            color: #ffebee;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+        .search-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px;
+        }
+        .search-bar input {
+            width: 80%;
+            max-width: 400px;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            border: none;
+            border-radius: 6px;
+            transition: box-shadow 0.3s ease;
+        }
+        .search-bar input:focus {
+            box-shadow: 0 0 10px #ff3b3b;
+            outline: none;
+        }
+        .search-bar button {
+            padding: 10px;
+            font-size: 16px;
+            margin-left: 10px;
+            cursor: pointer;
+            background-color: #ff3b3b;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        .search-bar button:hover {
+            background-color: #ff1a1a;
+            transform: scale(1.05);
+        }
+        .floating-window {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #1f1f1f;
+            border: 1px solid #333;
+            padding: 20px;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .floating-window.open {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .floating-window.closed {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.9);
+        }
+        .floating-window label {
+            color: #ff3b3b;
+            font-family: 'Roboto Condensed', sans-serif;
+        }
+        .floating-window input {
+            width: 100%;
+            padding: 2px;
+            font-size: 15px;
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            border: none;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .floating-window button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #ff3b3b;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        .floating-window button:hover {
+            background-color: #ff1a1a;
+            transform: scale(1.05);
+        }
+        .video-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            margin: 20px;
+            transition: all 0.3s ease;
+        }
+        .video {
+            margin: 10px;
+            background-color: #1f1f1f;
+            padding: 10px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 800px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .video:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        .video-title {
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: #ff3b3b;
+            font-family: 'Roboto Condensed', sans-serif;
+        }
+        .video-info {
+            font-size: 14px;
+            color: #777;
+            font-family: 'Roboto', sans-serif;
+        }
+        .video iframe {
+            width: 100%;
+            border-radius: 8px;
+        }
+        @media only screen and (max-width: 600px) {
+            .search-bar input, .search-bar button {
+                width: 100%;
+                margin: 5px 0;
+            }
+
+    </style>
+    <script>
+        document.addEventListener('click', function (event) {
+            var window = document.getElementById('floatingWindow');
+            if (event.target.closest('.floating-window, .search-bar button')) return;
+            window.classList.remove('open');
+            window.classList.add('closed');
+            setTimeout(function () {
+                window.style.display = 'none';
+            }, 300);
+        });
+
+        function toggleFloatingWindow() {
+            var window = document.getElementById('floatingWindow');
+            if (window.style.display === 'none' || window.classList.contains('closed')) {
+                window.style.display = 'block';
+                window.classList.remove('closed');
+                window.classList.add('open');
+            } else {
+                window.classList.remove('open');
+                window.classList.add('closed');
+                setTimeout(function () {
+                    window.style.display = 'none';
+                }, 300);
+            }
+        }
+
+        function searchSeasonEpisode() {
+            var season = document.getElementById('season').value;
+            var episode = document.getElementById('episode').value;
+            var videos = document.getElementsByClassName('video');
+            var found = false;
+
+            for (var i = 0; i < videos.length; i++) {
+                var info = videos[i].getElementsByClassName('video-info')[0].textContent;
+                if (info.includes('Saison ' + season) && info.includes('Épisode ' + episode)) {
+                    videos[i].style.order = -1; // Met la vidéo trouvée en haut de la liste
+                    found = true;
+                } else {
+                    videos[i].style.order = 0; // Remet les autres vidéos à leur ordre par défaut
+                }
+            }
+
+            if (!found) {
+                alert('Aucune vidéo trouvée pour la saison ' + season + ' épisode ' + episode);
+            }
+        }
+
+        function filterVideos() {
+            var searchInput = document.getElementById('searchInput').value.toLowerCase();
+            var videos = document.getElementsByClassName('video');
+            for (var i = 0; i < videos.length; i++) {
+                var title = videos[i].getElementsByClassName('video-title')[0].textContent.toLowerCase();
+                if (title.includes(searchInput)) {
+                    videos[i].style.display = 'block';
+                } else {
+                    videos[i].style.display = 'none';
+                }
+            }
+
+        }
+    </script>
+</head>
+<body>
+    <div class="header">
+        <img src="https://i.imgur.com/Zlx2x5j.png" alt="Logo">
+        <div class="header-text">Lucifer</div>
+    </div>
+    <div class="search-bar">
+        <input id="searchInput" type="text" placeholder="Rechercher par titre..." oninput="filterVideos()">
+        <button onclick="toggleFloatingWindow()">Saison et Épisode</button>
+    </div>
+    <div id="floatingWindow" class="floating-window closed">
+        <label for="season">Saison :</label>
+        <input type="number" id="season" name="season" class="input-field">
+        <br>
+        <label for="episode">Épisode :</label>
+        <input type="number" id="episode" name="episode" class="input-field">
+        <br>
+        <button onclick="searchSeasonEpisode()">Rechercher</button>
+    </div>
+    <div class="video-section">
+        <!-- Ajouter des vidéos avec des codes d'intégration ici -->
+        <div class="video">
+            <div class="video-title">Au commencement</div>
+            <div class="video-info">Saison 1, Épisode 1</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/dHqwxvG" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Lucifer, à la niche</div>
+            <div class="video-info">Saison 1, Épisode 2</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/ZoUKZe7" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">L'Aspirant Prince des Ténèbres</div>
+            <div class="video-info">Saison 1, Épisode 3</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/xv6jTKc" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Un mec qui assure</div>
+            <div class="video-info">Saison 1, Épisode 4</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/trMcrUA" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Pactes avec le diable</div>
+            <div class="video-info">Saison 1, Épisode 5</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/KX10yym" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Le Fils préféré</div>
+            <div class="video-info">Saison 1, Épisode 6</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/BFLkTsf" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Les Ailes de l'Enfer</div>
+            <div class="video-info">Saison 1, Épisode 7</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/VxmAVLA" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Docteur tromperie</div>
+            <div class="video-info">Saison 1, Épisode 8</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/qbUNOpe" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Un nouvel ami</div>
+            <div class="video-info">Saison 1, Épisode 9</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/gGkrLjq" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Le Dernier Repas</div>
+            <div class="video-info">Saison 1, Épisode 10</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/wHZmTLD" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Saint Lucifer</div>
+            <div class="video-info">Saison 1, Épisode 11</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/NMGSaLT" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Fanatisme</div>
+            <div class="video-info">Saison 1, Épisode 12</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/2dI6FZm" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Retour en Enfer</div>
+            <div class="video-info">Saison 1, Épisode 13</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/VWIHmp2" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Maman, où t'es ?</div>
+            <div class="video-info">Saison 2, Épisode 1</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/TwPwQSH" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Nouveau corps pour une nouvelle vie</div>
+            <div class="video-info">Saison 2, Épisode 2</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/kvemyzr" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Le purificateur</div>
+            <div class="video-info">Saison 2, Épisode 3</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/b7isIg6" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Soirée filles</div>
+            <div class="video-info">Saison 2, Épisode 4</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/uY9VTvX" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">L'exterminateur</div>
+            <div class="video-info">Saison 2, Épisode 5</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/OMMRYyE" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Monstre</div>
+            <div class="video-info">Saison 2, Épisode 6</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/5yoX4uE" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Copie presque conforme</div>
+            <div class="video-info">Saison 2, Épisode 7</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/ct5sAcW" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Retour de lame</div>
+            <div class="video-info">Saison 2, Épisode 8</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/fvArabK" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Avis d'expulsion</div>
+            <div class="video-info">Saison 2, Épisode 9</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/orqav7Y" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Jugement</div>
+            <div class="video-info">Saison 2, Épisode 10</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/b2I9e6n" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Ex, mais pas trop</div>
+            <div class="video-info">Saison 2, Épisode 11</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/vJqZscC" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Poignées d'amour</div>
+            <div class="video-info">Saison 2, Épisode 12</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/9A6TMaG" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Une belle journée pour mourir</div>
+            <div class="video-info">Saison 2, Épisode 13</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/0yHAaWk" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Candy Morningstar</div>
+            <div class="video-info">Saison 2, Épisode 14</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/HhxEjIT" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Que d'émotions !</div>
+            <div class="video-info">Saison 2, Épisode 15</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/Hqblx9w" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Dieu Johnson</div>
+            <div class="video-info">Saison 2, Épisode 16</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/mVrU2sU" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">La pièce manquante</div>
+            <div class="video-info">Saison 2, Épisode 17</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/ctodWuA" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Nouveau départ</div>
+            <div class="video-info">Saison 2, Épisode 18</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/QSEaEPd" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Le retour des ailes</div>
+            <div class="video-info">Saison 3, Épisode 1</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/UvnDUyY" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Mort d'un comique</div>
+            <div class="video-info">Saison 3, Épisode 2</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/PB6wirt" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">M et Mme Mazikeen Smith</div>
+            <div class="video-info">Saison 3, Épisode 3</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/VYWTBbX" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Que ferait Lucifer ?</div>
+            <div class="video-info">Saison 3, Épisode 4</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/sCBbLjy" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">La revenante</div>
+            <div class="video-info">Saison 3, Épisode 5</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/jPs5EXN" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Escapade à Las Vegas</div>
+            <div class="video-info">Saison 3, Épisode 6</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/a7UdFwg" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">L'enfer du journaliste</div>
+            <div class="video-info">Saison 3, Épisode 7</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/z5mUZIh" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Apparences</div>
+            <div class="video-info">Saison 3, Épisode 8</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/EVaRgWb" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">L'ultime pécheur</div>
+            <div class="video-info">Saison 3, Épisode 9</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/bCz2Fx2" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Tel est pris qui croyait prendre</div>
+            <div class="video-info">Saison 3, Épisode 10</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/YJvUS0J" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">La cité des anges</div>
+            <div class="video-info">Saison 3, Épisode 11</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/jPNWteo" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">La journée du lieutenant</div>
+            <div class="video-info">Saison 3, Épisode 12</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/2vgK6ks" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Jusqu'à ce que la mort nous sépare</div>
+            <div class="video-info">Saison 3, Épisode 13</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/O8w3wcQ" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Comment tuer un immortel</div>
+            <div class="video-info">Saison 3, Épisode 14</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/ovKPuVv" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">La promo de 3001</div>
+            <div class="video-info">Saison 3, Épisode 15</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/b03oqLB" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Cobaye des enfers</div>
+            <div class="video-info">Saison 3, Épisode 16</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/Z8cZuj4" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Sous les projecteurs</div>
+            <div class="video-info">Saison 3, Épisode 17</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/qX620Gg" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Les cœurs brisés</div>
+            <div class="video-info">Saison 3, Épisode 18</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/jeq1jgM" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Maze en colère</div>
+            <div class="video-info">Saison 3, Épisode 19</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/SHHyLnF" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">L'ange de San Bernardino</div>
+            <div class="video-info">Saison 3, Épisode 20</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/J1Ucb19" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">La compétition</div>
+            <div class="video-info">Saison 3, Épisode 21</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/OSsq2He" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">L'enterrement de vie de jeune fille</div>
+            <div class="video-info">Saison 3, Épisode 22</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/cWZEKLg" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Du Deckerstar tout craché</div>
+            <div class="video-info">Saison 3, Épisode 23</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/vgyETgn" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Parole de diable</div>
+            <div class="video-info">Saison 3, Épisode 24</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/bfLScij" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Trop dur d'être normal !</div>
+            <div class="video-info">Saison 3, Épisode 25</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/0v3JBLN" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Il était une fois</div>
+            <div class="video-info">Saison 3, Épisode 26</div>
+            <div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe src="//iframely.net/Quva1v9" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allowfullscreen allow="encrypted-media *;"></iframe></div></div><script async src="//iframely.net/embed.js"></script>
+        </div>
+        <div class="video">
+            <div class="video-title">Titre de la Vidéo 2</div>
+            <div class="video-info">Saison 2, Épisode 5</div>
+            <iframe src="https://www.youtube.com/embed/VIDEO_ID_2" frameborder="0" allowfullscreen></iframe>
+        </div>
+        
+        <!-- Ajouter d'autres vidéos ici -->
+    </div>
+</body>
+</html>
